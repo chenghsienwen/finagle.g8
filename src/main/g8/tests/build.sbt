@@ -1,4 +1,4 @@
-name := s"${(name in Global).value}"
+name := $name$
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
 libraryDependencies ++= Seq(
