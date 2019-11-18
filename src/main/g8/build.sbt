@@ -1,89 +1,92 @@
+import com.quadas.sbt.Settings._
+name in Global := "$docker_package_name$"
+organization in Global := "com.vpon"
+scalaVersion in Global := "2.11.12"
 
-// The simplest possible sbt build file is just one line:
+// resolve from environment( jennkins pipeline )
+nameOfBranch in Global := sys.env.getOrElse("ARTIFACT_NAME", s"${name.value}-unknown")
+buildNumber in Global := sys.env.getOrElse("BUILD_VERSION", "latest")
+dockerPublishRepo in Global := sys.env.get("DOCKER_PUBLISH_REPO")
+dockerPublishUser in Global := sys.env.get("DOCKER_PUBLISH_USER")
 
-scalaVersion := "2.12.4"
-// That is, to create a valid sbt build, all you've got to do is define the
-// version of Scala you'd like your project to use.
+lazy val root = project.in(file("."))
+  .settings(name := (name in Global).value)
+  .settings(coverageSettings)
+  .settings(releaseSettings)
+  .aggregate(core, bench, tests)
 
-// ============================================================================
+lazy val core = project
+//  .settings(scalacOptions ++= commonScalacOptions)
+  .settings(silencerSettings)
+//  .settings(wartRemoverSettings)
 
-// Lines like the above defining `scalaVersion` are called "settings" Settings
-// are key/value pairs. In the case of `scalaVersion`, the key is "scalaVersion"
-// and the value is "2.12.1"
+lazy val tests = project
+  .dependsOn(core)
 
-// It's possible to define many kinds of settings, such as:
+lazy val bench = project
+  .dependsOn(core)
 
-name := "finagle"
-organization := "us.jimschubert"
-version := "1.0"
+lazy val wartRemoverSettings = Seq(
+  wartremoverWarnings ++= Warts.allBut(Wart.Var, Wart.Equals)
+)
 
-// Note, it's not required for you to define these three settings. These are
-// mostly only necessary if you intend to publish your library's binaries on a
-// place like Sonatype or Bintray.
+lazy val commonScalacOptions = Seq(
+    "-deprecation"             // Emit warning and location for usages of deprecated APIs
+  , "-encoding", "UTF-8"
+  , "-feature"                 // Emit warning and location for usages of features that should be imported explicitly
+  , "-unchecked"               // Enable additional warnings where generated code depends on assumptions
+  , "-Xfatal-warnings"         // Fail the compilation if there are any warnings
+  , "-Xfuture"                 // Turn on future language features
+  , "-Xlint"                   // Enable specific warnings (see `scalac -Xlint:help`)
+  , "-Yno-adapted-args"        // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver
+  , "-Ywarn-dead-code"         // Warn when dead code is identified
+  , "-Ywarn-inaccessible"      // Warn about inaccessible types in method signatures
+  , "-Ywarn-infer-any"         // Warn when a type argument is inferred to be `Any`
+  , "-Ywarn-nullary-override"  // Warn when non-nullary `def f()' overrides nullary `def f'
+  , "-Ywarn-nullary-unit"      // Warn when nullary methods return Unit
+  , "-Ywarn-numeric-widen"     // Warn when numerics are widened
+  , "-Ywarn-unused"            // Warn when local and private vals, vars, defs, and types are unused
+  , "-Ywarn-unused-import"     // Warn when imports are unused
+  , "-Ywarn-value-discard"     // Warn when non-Unit expression results are unused
+)
 
+lazy val silencerSettings = Seq(
+  libraryDependencies += "com.github.ghik" % "silencer-plugin" % "0.4",
+  addCompilerPlugin("com.github.ghik" % "silencer-plugin" % "0.4")
+)
 
-// Want to use a published library in your project?
-// You can define other libraries as dependencies in your build like this:
-libraryDependencies += "org.typelevel" %% "cats" % "0.9.0"
-// Here, `libraryDependencies` is a set of dependencies, and by using `+=`,
-// we're adding the cats dependency to the set of dependencies that sbt will go
-// and fetch when it starts up.
-// Now, in any Scala file, you can import classes, objects, etc, from cats with
-// a regular import.
+lazy val coverageSettings = Seq(
+  coverageEnabled := true,
+  coverageFailOnMinimum := true,
+  coverageMinimum := 80,
+  coverageOutputCobertura := false,
+  coverageOutputXML := true
+)
 
-// TIP: To find the "dependency" that you need to add to the
-// `libraryDependencies` set, which in the above example looks like this:
+lazy val releaseSettings = Seq(
+  releaseProcess := {
+    import ReleaseTransformations._
 
-// "org.typelevel" %% "cats" % "0.9.0"
+    Seq[ReleaseStep](
+        checkSnapshotDependencies
+      , inquireVersions
+      , releaseStepCommand("validate")
+      , setReleaseVersion
+      , commitReleaseVersion
+      , tagRelease
+  //    , publishArtifacts          // publishing is done by build server (Jenkins)
+      , setNextVersion
+      , commitNextVersion
+      , pushChanges
+    )
+  }
+)
 
-// You can use Scaladex, an index of all known published Scala libraries. There,
-// after you find the library you want, you can just copy/paste the dependency
-// information that you need into your build file. For example, on the
-// typelevel/cats Scaladex page,
-// https://index.scala-lang.org/typelevel/cats, you can copy/paste the sbt
-// dependency from the sbt box on the right-hand side of the screen.
+resolvers += Resolver.mavenLocal
 
-libraryDependencies += "com.twitter" %% "finagle-core" % "$finagle_version$"
-
-// IMPORTANT NOTE: while build files look _kind of_ like regular Scala, it's
-// important to note that syntax in *.sbt files doesn't always behave like
-// regular Scala. For example, notice in this build file that it's not required
-// to put our settings into an enclosing object or class. Always remember that
-// sbt is a bit different, semantically, than vanilla Scala.
-
-// ============================================================================
-
-// Most moderately interesting Scala projects don't make use of the very simple
-// build file style (called "bare style") used in this build.sbt file. Most
-// intermediate Scala projects make use of so-called "multi-project" builds. A
-// multi-project build makes it possible to have different folders which sbt can
-// be configured differently for. That is, you may wish to have different
-// dependencies or different testing frameworks defined for different parts of
-// your codebase. Multi-project builds make this possible.
-
-// Here's a quick glimpse of what a multi-project build looks like for this
-// build, with only one "subproject" defined, called `root`:
-
-// lazy val root = (project in file(".")).
-//   settings(
-//     inThisBuild(List(
-//       organization := "us.jimschubert",
-//       scalaVersion := "2.12.4"
-//     )),
-//     name := "finagle"
-//   )
-
-// To learn more about multi-project builds, head over to the official sbt
-// documentation at http://www.scala-sbt.org/documentation.html
-
-initialCommands in console := """
-    | import com.twitter.concurrent._
-    | import com.twitter.util.{ Await, Future }
-    | import com.twitter.conversions.time._
-    |""".stripMargin
-
-initialCommands in consoleQuick := """
-    | import com.twitter.concurrent._
-    | import com.twitter.util.{ Await, Future }
-    | import com.twitter.conversions.time._
-    |""".stripMargin
+addCommandAlias("validate", ";clean;coverage;test;coverageReport;coverageAggregate")
+addCommandAlias("benchmark", ";clean;bench/jmh:compile;bench/jmh:run")
+addCommandAlias("package", ";core/universal:packageZipTarball")
+addCommandAlias("stage", ";core/stage")
+addCommandAlias("build", ";validate;coverageOff;package")
+addCommandAlias("run", ";core/run")

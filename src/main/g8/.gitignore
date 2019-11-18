@@ -1,0 +1,7 @@
+bench/target/
+core/target/
+project/project/
+project/target/
+target/
+tests/target
+.metals/

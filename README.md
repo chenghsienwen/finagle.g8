@@ -1,7 +1,7 @@
-This is a Giter8 template for Finatra
+This is a Giter8 template for Finagle
 
 ```
-sbt new jimschubert/finagle.g8
+sbt new chenghsienwen/finagle.g8
 ```
 
 [License](./LICENSE)
