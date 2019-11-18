@@ -1,4 +1,4 @@
-name := $name$
+name := "$name$-tests"
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
 libraryDependencies ++= Seq(
