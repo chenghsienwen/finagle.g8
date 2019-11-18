@@ -15,7 +15,7 @@ node {
     sbtHome = tool name: 'sbt'
 
     stage('SCM Checkout') {
-        gitCheckout "http://git.vpon.com/adx/${name}.git"
+        gitCheckout "http://git.vpon.com/adx/$docker_package_name$.git"
     }
 
     stage('Unit Test') {
