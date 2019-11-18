@@ -1,4 +1,4 @@
-name := s"${(name in Global).value}-bench"
+name := "$name$-bench"
 
 enablePlugins(JmhPlugin)
 
