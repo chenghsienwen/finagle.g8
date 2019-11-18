@@ -114,7 +114,7 @@ Prepares project for release of new version. By default it asks which version is
 Example:
 
 ```
-$> sbt release
+> sbt release
 Release version [0.1.0] :                 // type version or confirm suggestion
 Next version [0.1.1-SNAPSHOT] :           // type next version or confirm suggestion
 // validation (test + coverage)
