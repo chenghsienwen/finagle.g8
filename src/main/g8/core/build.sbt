@@ -1,4 +1,4 @@
-name := s"${(name in Global).value}-core"
+name := "$name$-core"
 
 resolvers ++= Seq(
   "vpon rel" at "http://nexus.vpon.com/content/repositories/releases/",
