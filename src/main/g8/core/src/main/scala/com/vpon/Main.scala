@@ -13,7 +13,7 @@ import org.jboss.netty.util.CharsetUtil.UTF_8
 import com.twitter.finagle.builder.{Server, ServerBuilder}
 import com.twitter.finagle.http.Http
 import java.net.InetSocketAddress
-// $COVERAGE-OFF$
+
 object Main extends QuadasServer {
 
   class Respond extends Service[HttpRequest, HttpResponse] {
@@ -38,4 +38,3 @@ object Main extends QuadasServer {
   }
 }
 
-// $COVERAGE-ON$
